@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.github.skittishSloth.rpgGame.engine.player;
+package com.github.skittishSloth.rpgGame.engine.hud;
 
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -14,6 +14,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.github.skittishSloth.rpgGame.engine.player.Player;
 
 /**
  *

@@ -25,7 +25,7 @@ import com.github.skittishSloth.rpgGame.engine.maps.TiledMapActor;
 import com.github.skittishSloth.rpgGame.engine.maps.TiledMapManager;
 import com.github.skittishSloth.rpgGame.engine.maps.Transition;
 import com.github.skittishSloth.rpgGame.engine.player.Direction;
-import com.github.skittishSloth.rpgGame.engine.player.HUDActor;
+import com.github.skittishSloth.rpgGame.engine.hud.HUDActor;
 import com.github.skittishSloth.rpgGame.engine.player.Player;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
 import java.util.EnumMap;
