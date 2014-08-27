@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="32" height="32" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="tilemap" tilewidth="32" tileheight="32">
+  <image source="tilemap.png" width="512" height="512"/>
+ </tileset>
+ <layer name="Ground" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt00EKACEIBVBv2HWdG+itpsUMfAQLQWjRXzwI0v7k0BCRUaTT86n2djidb5Mzn/mX5v/vzxvPqtxFoe/ELDvz8Rsq+dWeznyD+2titRfnt8vH+sgSvtjDmuzcCOuwr2v2OxbWnf+fiIiI7vICpJ9x6Q==
+  </data>
+ </layer>
+ <layer name="Bases" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt01kOQDAUheFrqcadsBa7YQHdhvmB0yASCYmpRc6X/FovchupCP1djBLbQ9wktT0AWbH133v9cAwO8lIu8lCGchSiyOpExylZzuGjQL55DtMKVKJqZ3+GWtWiTsa7qN9r1FwZfDJ/d70SERHRMwY7fyEZ
+  </data>
+ </layer>
+ <objectgroup name="player" width="32" height="32"/>
+ <objectgroup name="objects" width="32" height="32"/>
+ <layer name="Tops" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztz0tvAVEYxvHjUntK9xR7t+7VZa8u34SvxTdgUxJmq6i1S3XBR/CXmGhOmjHelCZynuSXc2aSed95lDK5dppo/fdP3Hk88MIHPx4QuOH+IEJ4RBgRPAnmSHtEEcMz4kggKdh/aY8tdkghjQyyyOFFsF/aI49XtNFBCWXBfmmPCt7QRQ91NAT77R4FFJW8hySWOvWooqbc9XhHHwOH+19kiNEv78f4wMTh7maufur5xPzH8xQzLLDEyuHuFHuuflqaDb6P3xye1/g6M9tN7Ln6aWJiYmJiYnKf2QOBDEQP
+  </data>
+ </layer>
+ <objectgroup name="collisions" width="32" height="32">
+  <object x="480" y="512" width="64" height="32"/>
+  <object x="448" y="512" width="32" height="32"/>
+  <object x="416" y="512" width="32" height="32"/>
+  <object x="352" y="512" width="64" height="32"/>
+  <object x="224" y="512" width="32" height="32"/>
+  <object x="256" y="512" width="32" height="32"/>
+  <object x="288" y="512" width="32" height="32"/>
+  <object x="320" y="512" width="32" height="32"/>
+  <object x="160" y="544" width="64" height="32"/>
+  <object x="96" y="544" width="64" height="32"/>
+  <object x="32" y="544" width="64" height="32"/>
+  <object x="96" y="416" width="32" height="32"/>
+  <object x="589" y="259" width="165" height="83"/>
+  <object x="607" y="348" width="35" height="36"/>
+  <object x="703" y="347" width="34" height="35"/>
+  <object x="529" y="292" width="30" height="26"/>
+  <object x="148" y="318" width="157" height="94"/>
+  <object x="150" y="284" width="154" height="31"/>
+  <object x="186" y="254" width="92" height="26"/>
+  <object x="554" y="478" width="67" height="33"/>
+  <object x="662" y="482" width="52" height="28"/>
+  <object x="763" y="480" width="52" height="31"/>
+  <object x="151" y="420" width="136" height="24"/>
+  <object x="832" y="112">
+   <ellipse/>
+  </object>
+ </objectgroup>
+ <objectgroup name="events" width="32" height="32">
+  <object name="start" type="map_entry" x="448" y="32" width="32" height="32"/>
+  <object name="go_otherworld1" type="transition" x="0" y="288" width="32" height="64">
+   <properties>
+    <property name="dest" value="otherworld"/>
+    <property name="dest_index" value="1"/>
+   </properties>
+  </object>
+  <object name="go_otherworld2" type="transition" x="0" y="448" width="32" height="64">
+   <properties>
+    <property name="dest" value="otherworld"/>
+    <property name="dest_index" value="2"/>
+   </properties>
+  </object>
+  <object name="go_eastworld" type="transition" x="992" y="384" width="32" height="64">
+   <properties>
+    <property name="dest" value="eastworld"/>
+   </properties>
+  </object>
+  <object name="enter_eastworld" type="map_entry" x="928" y="384" width="32" height="64">
+   <properties>
+    <property name="source" value="eastworld"/>
+   </properties>
+  </object>
+  <object name="enter_otherworld1" type="map_entry" x="64" y="288" width="32" height="64">
+   <properties>
+    <property name="source" value="otherworld"/>
+    <property name="source_index" value="1"/>
+   </properties>
+  </object>
+  <object name="enter_otherworld2" type="map_entry" x="64" y="448" width="32" height="64">
+   <properties>
+    <property name="source" value="otherworld"/>
+    <property name="source_index" value="2"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

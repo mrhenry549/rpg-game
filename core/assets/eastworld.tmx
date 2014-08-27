@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="20" height="32" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="tilemap" tilewidth="32" tileheight="32">
+  <image source="tilemap.png" width="512" height="512"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="20" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzzZ2BgCABifyrR8UCcQEWaWu4add/IcJ80lbE2lfFgD79R9426b9R9o+4bdd/IcB8Av+XSjQ==
+  </data>
+ </layer>
+ <objectgroup name="player" width="20" height="32"/>
+ <objectgroup name="objects" width="20" height="32"/>
+ <objectgroup name="events" width="20" height="32">
+  <object name="start_1" type="map_entry" x="64" y="288" width="32" height="64">
+   <properties>
+    <property name="source" value="TheMap"/>
+   </properties>
+  </object>
+  <object name="go_TheMap" type="transition" x="0" y="288" width="32" height="64">
+   <properties>
+    <property name="dest" value="TheMap"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup name="collisions" width="20" height="32"/>
+</map>
