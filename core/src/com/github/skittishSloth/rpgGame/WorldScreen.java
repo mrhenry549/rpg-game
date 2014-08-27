@@ -12,9 +12,9 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.maps.objects.TextureMapObject;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.skittishSloth.rpgGame.engine.maps.ManagedMap;
 import com.github.skittishSloth.rpgGame.engine.maps.OrthogonalTiledMapRendererWithSprites;
@@ -107,7 +107,7 @@ public class WorldScreen implements Screen {
         }
 
         player = new Player(dirTextures);
-        
+
         hudActor = new HUDActor(player);
         stage.addActor(hudActor);
 
@@ -166,14 +166,10 @@ public class WorldScreen implements Screen {
         if (nextMap != null) {
             inTransition = true;
             stage.addAction(Actions.alpha(0.0f, 0.5f));
-            
-            final Image img = new Image();
-            img.setColor(1, 1, 1, 1);
-            img.setSize(800, 800);
-            img.setZIndex(9999);
-            img.addAction(
+            final Actor actor = new Actor();
+            actor.addAction(
                     Actions.sequence(
-                            Actions.alpha(0.0f, 0.5f),
+                            Actions.delay(0.5f),
                             Actions.run(new Runnable() {
                                 @Override
                                 public void run() {
@@ -184,19 +180,16 @@ public class WorldScreen implements Screen {
                                     tiledMapRenderer.setMap(currentMap);
                                 }
                             }),
-                            Actions.alpha(1.0f, 0.5f),
                             Actions.run(new Runnable() {
                                 @Override
                                 public void run() {
-                                    stage.getActors().removeValue(img, true);
+                                    stage.getActors().removeValue(actor, true);
                                     stage.addAction(Actions.alpha(1.0f, 0.5f));
                                     inTransition = false;
-                                    img.setSize(0, 0);
                                 }
 
                             })));
-
-            stage.addActor(img);
+            stage.addActor(actor);
         }
     }
 
@@ -248,7 +241,7 @@ public class WorldScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
             player.takeHit(50);
         }
-        
+
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
                 player.moveNorthWest(deltaTime);
