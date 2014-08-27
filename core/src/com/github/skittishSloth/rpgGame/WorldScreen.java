@@ -10,11 +10,8 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.maps.objects.TextureMapObject;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -168,9 +165,12 @@ public class WorldScreen implements Screen {
         final Transition nextMap = currentMap.getTransition(charX, charY, width, collisionHeight);
         if (nextMap != null) {
             inTransition = true;
+            stage.addAction(Actions.alpha(0.0f, 0.5f));
+            
             final Image img = new Image();
             img.setColor(1, 1, 1, 1);
             img.setSize(800, 800);
+            img.setZIndex(9999);
             img.addAction(
                     Actions.sequence(
                             Actions.alpha(0.0f, 0.5f),
@@ -189,6 +189,7 @@ public class WorldScreen implements Screen {
                                 @Override
                                 public void run() {
                                     stage.getActors().removeValue(img, true);
+                                    stage.addAction(Actions.alpha(1.0f, 0.5f));
                                     inTransition = false;
                                     img.setSize(0, 0);
                                 }
