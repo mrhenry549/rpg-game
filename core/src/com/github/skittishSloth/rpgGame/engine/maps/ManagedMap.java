@@ -21,7 +21,7 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
-import com.github.skittishSloth.rpgGame.engine.player.AtlasPlayer;
+import com.github.skittishSloth.rpgGame.engine.player.Player;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
 
 /**
@@ -160,13 +160,13 @@ public class ManagedMap {
         return TextureMapObject.class.cast(getPlayerLayer().getObjects().get(0));
     }
 
-    public void initializePlayer(final String source, final Integer index, final float deltaTime, final AtlasPlayer player) {
+    public void initializePlayer(final String source, final Integer index, final float deltaTime, final Player player) {
         final MapObject entryPoint = getEntryPoint(source, index);
-        final TextureRegion textureRegion = player.getTextureRegion(deltaTime);
+        final TextureRegion[] textureRegions = player.getTextureRegions(deltaTime);
         final RectangleMapObject rectStartPoint;
         if (entryPoint == null) {
             System.err.println("[Map " + getName() + "]: entry point was null.");
-            rectStartPoint = new RectangleMapObject(0, 0, textureRegion.getRegionWidth(), textureRegion.getRegionHeight());
+            rectStartPoint = new RectangleMapObject(0, 0, player.getWidth(), player.getHeight());
         } else {
             System.err.println("[Map " + getName() + "]: had an entry point!");
             rectStartPoint = RectangleMapObject.class.cast(entryPoint);
@@ -175,13 +175,34 @@ public class ManagedMap {
         final float x = rectStartPoint.getRectangle().getX();
         final float y = rectStartPoint.getRectangle().getY();
 
-        final TextureMapObject tmo = new TextureMapObject(textureRegion);
-        tmo.setX(x);
-        tmo.setY(y);
+        for (final TextureRegion textureRegion : textureRegions) {
+            final TextureMapObject tmo = new TextureMapObject(textureRegion);
+            tmo.setX(x);
+            tmo.setY(y);
+            getPlayerLayer().getObjects().add(tmo);
+        }
         final PositionInformation playerPos = player.getPositionInformation();
         playerPos.setX(x);
         playerPos.setY(y);
-        getPlayerLayer().getObjects().add(tmo);
+    }
+    
+    public void updatePlayer(final Player player, final float deltaTime) {
+        final MapObjects mapObjects = getPlayerLayer().getObjects();
+        while (mapObjects.getCount() > 0) {
+            mapObjects.remove(0);
+        }
+        
+        final TextureRegion[] textureRegions = player.getTextureRegions(deltaTime);
+
+        final PositionInformation playerPos = player.getPositionInformation();
+        final float x = playerPos.getX();
+        final float y = playerPos.getY();
+        for (final TextureRegion textureRegion : textureRegions) {
+            final TextureMapObject tmo = new TextureMapObject(textureRegion);
+            tmo.setX(x);
+            tmo.setY(y);
+            mapObjects.add(tmo);
+        }
     }
 
     public void removePlayer() {

@@ -6,6 +6,8 @@
 
 package com.github.skittishSloth.rpgGame.engine.player;
 
+import com.github.skittishSloth.rpgGame.engine.common.Direction;
+
 /**
  *
  * @author mcory01
@@ -13,7 +15,7 @@ package com.github.skittishSloth.rpgGame.engine.player;
 public class PositionInformation {
     
     public PositionInformation() {
-        direction = Direction.NORTH;
+        direction = Direction.UP;
     }
 
     public float getX() {

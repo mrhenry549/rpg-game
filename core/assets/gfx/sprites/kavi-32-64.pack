@@ -9,21 +9,21 @@ down_idle
   orig: 0, 0
   offset: 0, 0
   index: -1
-down_walk_01
+down_walk_3
   rotate: false
   xy: 32, 0
   size: 32, 64
   orig: 32, 0
   offset: 0, 0
   index: -1
-down_walk_02
+down_walk_2
   rotate: false
   xy: 64, 0
   size: 32, 64
   orig: 64, 0
   offset: 0, 0
   index: -1
-down_walk_03
+down_walk_1
   rotate: false
   xy: 96, 0
   size: 32, 64
@@ -37,21 +37,21 @@ left_idle
   orig: 0, 64
   offset: 0, 0
   index: -1
-left_walk_01
+left_walk_3
   rotate: false
   xy: 32, 64
   size: 32, 64
   orig: 32, 64
   offset: 0, 0
   index: -1
-left_walk_02
+left_walk_2
   rotate: false
   xy: 64, 64
   size: 32, 64
   orig: 64, 64
   offset: 0, 0
   index: -1
-left_walk_03
+left_walk_1
   rotate: false
   xy: 96, 64
   size: 32, 64
@@ -65,21 +65,21 @@ right_idle
   orig: 0, 128
   offset: 0, 0
   index: -1
-right_walk_01
+right_walk_3
   rotate: false
   xy: 32, 128
   size: 32, 64
   orig: 32, 128
   offset: 0, 0
   index: -1
-right_walk_02
+right_walk_2
   rotate: false
   xy: 64, 128
   size: 32, 64
   orig: 64, 128
   offset: 0, 0
   index: -1
-right_walk_03
+right_walk_1
   rotate: false
   xy: 96, 128
   size: 32, 64
@@ -93,21 +93,21 @@ up_idle
   orig: 0, 192
   offset: 0, 0
   index: -1
-up_walk_01
+up_walk_3
   rotate: false
   xy: 32, 192
   size: 32, 64
   orig: 32, 192
   offset: 0, 0
   index: -1
-up_walk_02
+up_walk_2
   rotate: false
   xy: 64, 192
   size: 32, 64
   orig: 64, 192
   offset: 0, 0
   index: -1
-up_walk_03
+up_walk_1
   rotate: false
   xy: 96, 192
   size: 32, 64

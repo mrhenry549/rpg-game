@@ -10,8 +10,6 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -21,12 +19,9 @@ import com.github.skittishSloth.rpgGame.engine.maps.ManagedMap;
 import com.github.skittishSloth.rpgGame.engine.maps.OrthogonalTiledMapRendererWithSprites;
 import com.github.skittishSloth.rpgGame.engine.maps.TiledMapManager;
 import com.github.skittishSloth.rpgGame.engine.maps.Transition;
-import com.github.skittishSloth.rpgGame.engine.player.Direction;
 import com.github.skittishSloth.rpgGame.engine.hud.HUDActor;
-import com.github.skittishSloth.rpgGame.engine.player.AtlasPlayer;
+import com.github.skittishSloth.rpgGame.engine.player.Player;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
-import java.util.EnumMap;
-import java.util.Map;
 
 /**
  *
@@ -36,8 +31,7 @@ public class WorldScreen implements Screen {
 
     private ManagedMap currentMap = null;
 
-//    private final Player player;
-    private final AtlasPlayer player;
+    private final Player player;
 
     private final TiledMapManager mapManager = new TiledMapManager();
     private final OrthographicCamera camera;
@@ -62,53 +56,7 @@ public class WorldScreen implements Screen {
 
         tiledMapRenderer = new OrthogonalTiledMapRendererWithSprites(currentMap, stage.getBatch());
 
-        final Texture textureNorth = new Texture(Gdx.files.internal("pikachu-north.png"));
-        final Texture textureNE = new Texture(Gdx.files.internal("pikachu-ne.png"));
-        final Texture textureEast = new Texture(Gdx.files.internal("pikachu-east.png"));
-        final Texture textureSE = new Texture(Gdx.files.internal("pikachu-se.png"));
-        final Texture textureSouth = new Texture(Gdx.files.internal("pikachu-south.png"));
-        final Texture textureSW = new Texture(Gdx.files.internal("pikachu-sw.png"));
-        final Texture textureWest = new Texture(Gdx.files.internal("pikachu-west.png"));
-        final Texture textureNW = new Texture(Gdx.files.internal("pikachu-nw.png"));
-        final Map<Direction, Texture> dirTextures = new EnumMap<Direction, Texture>(Direction.class);
-        for (final Direction dir : Direction.values()) {
-            final Texture toUse;
-            switch (dir) {
-                case NORTH:
-                    toUse = textureNorth;
-                    break;
-                case NORTH_EAST:
-                    toUse = textureNE;
-                    break;
-                case EAST:
-                    toUse = textureEast;
-                    break;
-                case SOUTH_EAST:
-                    toUse = textureSE;
-                    break;
-                case SOUTH:
-                    toUse = textureSouth;
-                    break;
-                case SOUTH_WEST:
-                    toUse = textureSW;
-                    break;
-                case WEST:
-                    toUse = textureWest;
-                    break;
-                case NORTH_WEST:
-                    toUse = textureNW;
-                    break;
-                default:
-                    toUse = null;
-                    break;
-            }
-
-            dirTextures.put(dir, toUse);
-        }
-
-//        player = new Player(dirTextures);
-
-        player = new AtlasPlayer();
+        player = new Player();
 
         hudActor = new HUDActor(player);
         stage.addActor(hudActor);
@@ -120,7 +68,7 @@ public class WorldScreen implements Screen {
         camera.update();
 
         gameTextActor = new GameTextActor();
-        stage.addActor(gameTextActor);
+        //stage.addActor(gameTextActor);
 
         Gdx.input.setInputProcessor(stage);
     }
@@ -139,7 +87,7 @@ public class WorldScreen implements Screen {
             handleCollisions();
 
             updateCharacter(delta);
-
+            
             handleTransition(delta);
         }
 
@@ -156,13 +104,13 @@ public class WorldScreen implements Screen {
     }
 
     private void updateCharacter(final float deltaTime) {
-        final TextureMapObject character = currentMap.getPlayerMapObject();
-
-        final PositionInformation playerPos = player.getPositionInformation();
-
-        character.setTextureRegion(player.getTextureRegion(deltaTime));
-        character.setX(playerPos.getX());
-        character.setY(playerPos.getY());
+        currentMap.updatePlayer(player, deltaTime);
+//        final TextureMapObject character = currentMap.getPlayerMapObject();
+//
+//        final PositionInformation playerPos = player.getPositionInformation();
+//        character.setTextureRegion(player.getTextureRegion(deltaTime));
+//        character.setX(playerPos.getX());
+//        character.setY(playerPos.getY());
     }
 
     private void handleTransition(final float deltaTime) {
@@ -226,7 +174,6 @@ public class WorldScreen implements Screen {
         );
 
         camera.update();
-
     }
 
     private void handleCollisions() {
@@ -297,7 +244,6 @@ public class WorldScreen implements Screen {
         tiledMapRenderer.dispose();
         player.dispose();
         stage.dispose();
-        //atlasPlayer.dispose();
     }
 
 }

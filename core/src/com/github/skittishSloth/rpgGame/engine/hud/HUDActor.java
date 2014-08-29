@@ -12,7 +12,6 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.github.skittishSloth.rpgGame.engine.maps.ManagedMap;
 import com.github.skittishSloth.rpgGame.engine.maps.MiniMapActor;
-import com.github.skittishSloth.rpgGame.engine.player.AtlasPlayer;
 import com.github.skittishSloth.rpgGame.engine.player.Player;
 
 /**
@@ -21,7 +20,7 @@ import com.github.skittishSloth.rpgGame.engine.player.Player;
  */
 public class HUDActor extends Actor {
     
-    public HUDActor(final AtlasPlayer player) {
+    public HUDActor(final Player player) {
         super();
         
         this.player = player;
@@ -62,7 +61,7 @@ public class HUDActor extends Actor {
         miniMapActor.updateMapSprite(camera);
     }
     
-    private final AtlasPlayer player;
+    private final Player player;
     private final HealthBarActor healthBarActor;
     private final MiniMapActor miniMapActor;
     

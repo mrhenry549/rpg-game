@@ -6,11 +6,9 @@
 package com.github.skittishSloth.rpgGame.engine.maps;
 
 import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
@@ -19,9 +17,7 @@ import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import java.util.Iterator;
 
 /**
  *
@@ -114,17 +110,16 @@ public class MiniMapActor extends Actor {
     }
 
     private static void printProperties(final MapProperties properties) {
-        final Iterator<String> keys = properties.getKeys();
-        System.err.println("Properties:");
-        while (keys.hasNext()) {
-            final String key = keys.next();
-            final Object value = properties.get(key);
-            System.err.println("\t'" + key + "' : '" + value + "'");
-        }
+//        final Iterator<String> keys = properties.getKeys();
+//        System.err.println("Properties:");
+//        while (keys.hasNext()) {
+//            final String key = keys.next();
+//            final Object value = properties.get(key);
+//            System.err.println("\t'" + key + "' : '" + value + "'");
+//        }
     }
 
     private Texture mapTexture;
-    private Sprite playerSprite;
     private ManagedMap currentMap;
     private Image mapImage;
 }
