@@ -14,3 +14,6 @@ hs_err_pid*
 # environment related stuff.
 .gradle/
 .nb-gradle/
+
+# OS files that don't belong.
+.DS_Store

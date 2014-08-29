@@ -16,14 +16,14 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.github.skittishSloth.rpgGame.engine.gameText.GameTextActor;
 import com.github.skittishSloth.rpgGame.engine.maps.ManagedMap;
 import com.github.skittishSloth.rpgGame.engine.maps.OrthogonalTiledMapRendererWithSprites;
-import com.github.skittishSloth.rpgGame.engine.maps.TiledMapActor;
 import com.github.skittishSloth.rpgGame.engine.maps.TiledMapManager;
 import com.github.skittishSloth.rpgGame.engine.maps.Transition;
 import com.github.skittishSloth.rpgGame.engine.player.Direction;
 import com.github.skittishSloth.rpgGame.engine.hud.HUDActor;
-import com.github.skittishSloth.rpgGame.engine.player.Player;
+import com.github.skittishSloth.rpgGame.engine.player.AtlasPlayer;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
 import java.util.EnumMap;
 import java.util.Map;
@@ -36,15 +36,17 @@ public class WorldScreen implements Screen {
 
     private ManagedMap currentMap = null;
 
-    private final Player player;
+//    private final Player player;
+    private final AtlasPlayer player;
 
     private final TiledMapManager mapManager = new TiledMapManager();
     private final OrthographicCamera camera;
+
     private final OrthogonalTiledMapRendererWithSprites tiledMapRenderer;
     private final Stage stage;
 
-    private final TiledMapActor mapActor;
     private final HUDActor hudActor;
+    private final GameTextActor gameTextActor;
 
     public WorldScreen() {
         stage = new Stage(new ScreenViewport());
@@ -59,8 +61,6 @@ public class WorldScreen implements Screen {
         currentMap = mapManager.getMap("TheMap");
 
         tiledMapRenderer = new OrthogonalTiledMapRendererWithSprites(currentMap, stage.getBatch());
-        mapActor = new TiledMapActor(tiledMapRenderer);
-        stage.addActor(mapActor);
 
         final Texture textureNorth = new Texture(Gdx.files.internal("pikachu-north.png"));
         final Texture textureNE = new Texture(Gdx.files.internal("pikachu-ne.png"));
@@ -106,15 +106,21 @@ public class WorldScreen implements Screen {
             dirTextures.put(dir, toUse);
         }
 
-        player = new Player(dirTextures);
+//        player = new Player(dirTextures);
+
+        player = new AtlasPlayer();
 
         hudActor = new HUDActor(player);
         stage.addActor(hudActor);
 
-        currentMap.initializePlayer(null, null, player);
+        currentMap.initializePlayer(null, null, 0, player);
+        hudActor.setCurrentMap(currentMap);
 
         camera.setToOrtho(false, w, h);
         camera.update();
+
+        gameTextActor = new GameTextActor();
+        stage.addActor(gameTextActor);
 
         Gdx.input.setInputProcessor(stage);
     }
@@ -132,9 +138,9 @@ public class WorldScreen implements Screen {
 
             handleCollisions();
 
-            updateCharacter();
+            updateCharacter(delta);
 
-            handleTransition();
+            handleTransition(delta);
         }
 
         updateCamera();
@@ -142,21 +148,24 @@ public class WorldScreen implements Screen {
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
 
+        gameTextActor.update(camera);
+        //miniMap.render(stage.getBatch());
+
         stage.act(delta);
         stage.draw();
     }
 
-    private void updateCharacter() {
+    private void updateCharacter(final float deltaTime) {
         final TextureMapObject character = currentMap.getPlayerMapObject();
 
         final PositionInformation playerPos = player.getPositionInformation();
 
-        character.setTextureRegion(player.getCurrentSprite());
+        character.setTextureRegion(player.getTextureRegion(deltaTime));
         character.setX(playerPos.getX());
         character.setY(playerPos.getY());
     }
 
-    private void handleTransition() {
+    private void handleTransition(final float deltaTime) {
         final PositionInformation playerPos = player.getPositionInformation();
         float charX = playerPos.getX();
         float charY = playerPos.getY();
@@ -176,8 +185,9 @@ public class WorldScreen implements Screen {
                                     final String prevMap = currentMap.getName();
                                     currentMap.removePlayer();
                                     currentMap = mapManager.getMap(nextMap.getMapName());
-                                    currentMap.initializePlayer(prevMap, nextMap.getIndex(), player);
+                                    currentMap.initializePlayer(prevMap, nextMap.getIndex(), deltaTime, player);
                                     tiledMapRenderer.setMap(currentMap);
+                                    hudActor.setCurrentMap(currentMap);
                                 }
                             }),
                             Actions.run(new Runnable() {
@@ -216,6 +226,7 @@ public class WorldScreen implements Screen {
         );
 
         camera.update();
+
     }
 
     private void handleCollisions() {
@@ -243,25 +254,15 @@ public class WorldScreen implements Screen {
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-                player.moveNorthWest(deltaTime);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-                player.moveSouthWest(deltaTime);
-            } else {
-                player.moveWest(deltaTime);
-            }
+            player.moveWest(deltaTime);
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-                player.moveNorthEast(deltaTime);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-                player.moveSouthEast(deltaTime);
-            } else {
-                player.moveEast(deltaTime);
-            }
+            player.moveEast(deltaTime);
         } else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             player.moveNorth(deltaTime);
         } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             player.moveSouth(deltaTime);
+        } else {
+            player.setMoving(false);
         }
     }
 
@@ -295,6 +296,8 @@ public class WorldScreen implements Screen {
         mapManager.dispose();
         tiledMapRenderer.dispose();
         player.dispose();
+        stage.dispose();
+        //atlasPlayer.dispose();
     }
 
 }

@@ -5,7 +5,6 @@
  */
 package com.github.skittishSloth.rpgGame.engine.maps;
 
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapLayers;
@@ -22,7 +21,7 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
-import com.github.skittishSloth.rpgGame.engine.player.Player;
+import com.github.skittishSloth.rpgGame.engine.player.AtlasPlayer;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
 
 /**
@@ -161,9 +160,9 @@ public class ManagedMap {
         return TextureMapObject.class.cast(getPlayerLayer().getObjects().get(0));
     }
 
-    public void initializePlayer(final String source, final Integer index, final Player player) {
+    public void initializePlayer(final String source, final Integer index, final float deltaTime, final AtlasPlayer player) {
         final MapObject entryPoint = getEntryPoint(source, index);
-        final TextureRegion textureRegion = player.getTextureRegion();
+        final TextureRegion textureRegion = player.getTextureRegion(deltaTime);
         final RectangleMapObject rectStartPoint;
         if (entryPoint == null) {
             System.err.println("[Map " + getName() + "]: entry point was null.");

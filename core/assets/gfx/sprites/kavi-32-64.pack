@@ -1,0 +1,117 @@
+kavi-32-64.png
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+down_idle
+  rotate: false
+  xy: 0, 0
+  size: 32, 64
+  orig: 0, 0
+  offset: 0, 0
+  index: -1
+down_walk_01
+  rotate: false
+  xy: 32, 0
+  size: 32, 64
+  orig: 32, 0
+  offset: 0, 0
+  index: -1
+down_walk_02
+  rotate: false
+  xy: 64, 0
+  size: 32, 64
+  orig: 64, 0
+  offset: 0, 0
+  index: -1
+down_walk_03
+  rotate: false
+  xy: 96, 0
+  size: 32, 64
+  orig: 96, 0
+  offset: 0, 0
+  index: -1
+left_idle
+  rotate: false
+  xy: 0, 64
+  size: 32, 64
+  orig: 0, 64
+  offset: 0, 0
+  index: -1
+left_walk_01
+  rotate: false
+  xy: 32, 64
+  size: 32, 64
+  orig: 32, 64
+  offset: 0, 0
+  index: -1
+left_walk_02
+  rotate: false
+  xy: 64, 64
+  size: 32, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+left_walk_03
+  rotate: false
+  xy: 96, 64
+  size: 32, 64
+  orig: 96, 64
+  offset: 0, 0
+  index: -1
+right_idle
+  rotate: false
+  xy: 0, 128
+  size: 32, 64
+  orig: 0, 128
+  offset: 0, 0
+  index: -1
+right_walk_01
+  rotate: false
+  xy: 32, 128
+  size: 32, 64
+  orig: 32, 128
+  offset: 0, 0
+  index: -1
+right_walk_02
+  rotate: false
+  xy: 64, 128
+  size: 32, 64
+  orig: 64, 128
+  offset: 0, 0
+  index: -1
+right_walk_03
+  rotate: false
+  xy: 96, 128
+  size: 32, 64
+  orig: 96, 128
+  offset: 0, 0
+  index: -1
+up_idle
+  rotate: false
+  xy: 0, 192
+  size: 32, 64
+  orig: 0, 192
+  offset: 0, 0
+  index: -1
+up_walk_01
+  rotate: false
+  xy: 32, 192
+  size: 32, 64
+  orig: 32, 192
+  offset: 0, 0
+  index: -1
+up_walk_02
+  rotate: false
+  xy: 64, 192
+  size: 32, 64
+  orig: 64, 192
+  offset: 0, 0
+  index: -1
+up_walk_03
+  rotate: false
+  xy: 96, 192
+  size: 32, 64
+  orig: 96, 192
+  offset: 0, 0
+  index: -1
+ 

@@ -12,7 +12,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.github.skittishSloth.rpgGame.engine.player.Player;
+import com.github.skittishSloth.rpgGame.engine.player.AtlasPlayer;
 
 /**
  *
@@ -20,7 +20,7 @@ import com.github.skittishSloth.rpgGame.engine.player.Player;
  */
 public class HealthBarActor extends Actor {
 
-    public HealthBarActor(final Player player) {
+    public HealthBarActor(final AtlasPlayer player) {
         super();
 
         this.player = player;
@@ -68,7 +68,7 @@ public class HealthBarActor extends Actor {
         healthBarBox.setY(worldCoords.y);
     }
 
-    private final Player player;
+    private final AtlasPlayer player;
     private final Image healthBarBox;
     private final Image healthBar;
 }
