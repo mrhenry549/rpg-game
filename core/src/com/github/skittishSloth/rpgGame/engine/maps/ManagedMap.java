@@ -5,6 +5,8 @@
  */
 package com.github.skittishSloth.rpgGame.engine.maps;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapLayers;
@@ -21,8 +23,12 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
+import com.github.skittishSloth.rpgGame.engine.common.Direction;
 import com.github.skittishSloth.rpgGame.engine.player.Player;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -45,6 +51,8 @@ public class ManagedMap {
         // calc total map size
         this.worldWidth = mapWidth * tilePixelWidth;
         this.worldHeight = mapHeight * tilePixelHeight;
+        
+        initializeItems();
     }
 
     public String getName() {
@@ -204,6 +212,39 @@ public class ManagedMap {
             mapObjects.add(tmo);
         }
     }
+    
+    public void updateItems() {
+        final MapLayer objectsLayer = getObjectsLayer();
+        final MapObjects objects = objectsLayer.getObjects();
+        
+        for (final TextureMapObject textureObj : objects.getByType(TextureMapObject.class)) {
+            final String type = textureObj.getProperties().get("type", String.class);
+            if (StringUtils.equals(type, "item")) {
+                objects.remove(textureObj);
+            }
+        }
+        
+        for (final RectangleMapObject obj : objects.getByType(RectangleMapObject.class)) {
+            final MapProperties props = obj.getProperties();
+            final String type = props.get("type", String.class);
+            if (!(StringUtils.equals(type, "item"))) {
+                continue;
+            }
+            
+            final String id = props.get("id", String.class);
+            final Item item = items.get(id);
+            if (!(item.isAlive())) {
+                continue;
+            }
+            
+            final TextureRegion region = item.getTextureRegion();
+            final TextureMapObject tmo = new TextureMapObject(region);
+            final Rectangle rect = item.getRectangle();
+            tmo.setX(rect.getX());
+            tmo.setY(rect.getY());
+            objects.add(tmo);
+        }
+    }
 
     public void removePlayer() {
         getPlayerLayer().getObjects().remove(0);
@@ -217,6 +258,17 @@ public class ManagedMap {
         // there are several other types, Rectangle is probably the most common one
         for (final RectangleMapObject rectangleObject : collisions.getByType(RectangleMapObject.class)) {
             final Rectangle rectangle = rectangleObject.getRectangle();
+            if (Intersector.overlaps(rectangle, charRect)) {
+                return true;
+            }
+        }
+        
+        for (final Item item : items.values()) {
+            if (!(item.isAlive())) {
+                continue;
+            }
+            
+            final Rectangle rectangle = item.getRectangle();
             if (Intersector.overlaps(rectangle, charRect)) {
                 return true;
             }
@@ -309,6 +361,86 @@ public class ManagedMap {
         map.dispose();
     }
 
+    public Item getNearbyItems(final Player player) {
+        final PositionInformation playerPos = player.getPositionInformation();
+        final Direction facing = playerPos.getDirection();
+        final Rectangle searchRect = new Rectangle();
+        // start at the player
+        searchRect.x = playerPos.getX();
+        searchRect.y = playerPos.getY();
+        searchRect.width = player.getWidth();
+        searchRect.height = player.getHeight();
+        
+        switch (facing) {
+            case UP:
+                searchRect.y += tilePixelHeight;
+                break;
+            case RIGHT:
+                searchRect.x += tilePixelWidth;
+                break;
+            case DOWN:
+                searchRect.y -= tilePixelHeight;
+                break;
+            case LEFT:
+                searchRect.x -= tilePixelWidth;
+                break;
+        }
+        
+        final MapLayer objectLayer = getObjectsLayer();
+        final MapObjects objects = objectLayer.getObjects();
+        Item res = null;
+        
+        for (final RectangleMapObject obj : objects.getByType(RectangleMapObject.class)) {
+            final MapProperties props = obj.getProperties();
+            final String type = props.get("type", String.class);
+            if (!(StringUtils.equals(type, "item"))) {
+                continue;
+            }
+            
+            final String id = props.get("id", String.class);
+            final Item item = items.get(id);
+            
+            if (Intersector.overlaps(searchRect, item.getRectangle())) {
+                res = item;
+                break;
+            }
+        }
+        
+        return res;
+    }
+    
+    private void initializeItems() {
+        final MapLayer objectsLayer = getObjectsLayer();
+        final MapObjects objects = objectsLayer.getObjects();
+        
+        for (final RectangleMapObject obj : objects.getByType(RectangleMapObject.class)) {
+            final MapProperties props = obj.getProperties();
+            
+            final String type = props.get("type", String.class);
+            if (!("item".equals(type))) {
+                continue;
+            }
+            
+            final String initialTexturePath = props.get("initial_icon", String.class);
+            final Texture initialTexture = new Texture(Gdx.files.internal(initialTexturePath));
+            
+            final String actionTexturePath = props.get("action_icon", String.class);
+            final Texture actionTexture;
+            if (StringUtils.isBlank(actionTexturePath)) {
+                actionTexture = null;
+            } else {
+                actionTexture = new Texture(Gdx.files.internal(actionTexturePath));
+            }
+            
+            final String contains = props.get("contains", String.class);
+            final Rectangle rectangle = obj.getRectangle();
+            final String id = props.get("id", String.class);
+            final Item item = new Item(id, initialTexture, actionTexture, contains, rectangle);
+            items.put(id, item);
+        }
+    }
+
+    private final Map<String, Item> items = new HashMap<String, Item>();
     private final TiledMap map;
     private final String name;
 

@@ -27,6 +27,7 @@ public class HUDActor extends Actor {
         
         this.healthBarActor = new HealthBarActor(this.player);
         this.miniMapActor = new MiniMapActor();
+        this.frameRateActor = new FrameRateActor();
     }
 
     @Override
@@ -39,6 +40,8 @@ public class HUDActor extends Actor {
             updateMiniMap(camera);
             miniMapActor.draw(batch, parentAlpha);
         }
+        frameRateActor.update(camera);
+        frameRateActor.draw(batch, parentAlpha);
     }
     
     public void setCurrentMap(final ManagedMap map) {
@@ -64,6 +67,8 @@ public class HUDActor extends Actor {
     private final Player player;
     private final HealthBarActor healthBarActor;
     private final MiniMapActor miniMapActor;
+    
+    private final FrameRateActor frameRateActor;
     
     private boolean miniMapActive = false;
 }

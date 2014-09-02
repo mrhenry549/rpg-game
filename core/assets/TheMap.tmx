@@ -49,7 +49,7 @@
   </object>
  </objectgroup>
  <objectgroup name="events" width="32" height="32">
-  <object name="start" type="map_entry" x="448" y="32" width="32" height="32"/>
+  <object name="start" type="map_entry" x="448" y="352" width="32" height="32"/>
   <object name="go_otherworld1" type="transition" x="0" y="288" width="32" height="64">
    <properties>
     <property name="dest" value="otherworld"/>
@@ -82,6 +82,16 @@
    <properties>
     <property name="source" value="otherworld"/>
     <property name="source_index" value="2"/>
+   </properties>
+  </object>
+  <object name="go_town" type="transition" x="416" y="0" width="96" height="32">
+   <properties>
+    <property name="dest" value="town"/>
+   </properties>
+  </object>
+  <object name="enter_town" type="map_entry" x="416" y="64" width="96" height="32">
+   <properties>
+    <property name="source" value="town"/>
    </properties>
   </object>
  </objectgroup>

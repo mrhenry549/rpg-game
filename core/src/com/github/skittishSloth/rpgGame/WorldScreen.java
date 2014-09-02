@@ -8,11 +8,16 @@ package com.github.skittishSloth.rpgGame;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.skittishSloth.rpgGame.engine.gameText.GameTextActor;
 import com.github.skittishSloth.rpgGame.engine.maps.ManagedMap;
@@ -20,6 +25,7 @@ import com.github.skittishSloth.rpgGame.engine.maps.OrthogonalTiledMapRendererWi
 import com.github.skittishSloth.rpgGame.engine.maps.TiledMapManager;
 import com.github.skittishSloth.rpgGame.engine.maps.Transition;
 import com.github.skittishSloth.rpgGame.engine.hud.HUDActor;
+import com.github.skittishSloth.rpgGame.engine.maps.Item;
 import com.github.skittishSloth.rpgGame.engine.player.Player;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
 
@@ -41,20 +47,24 @@ public class WorldScreen implements Screen {
 
     private final HUDActor hudActor;
     private final GameTextActor gameTextActor;
+    private final SpriteBatch batch;
 
     public WorldScreen() {
         stage = new Stage(new ScreenViewport());
-        camera = OrthographicCamera.class.cast(stage.getCamera());
+        //camera = OrthographicCamera.class.cast(stage.getCamera());
+        camera = new OrthographicCamera();
+        batch = new SpriteBatch();
         mapManager.addMap("TheMap", "TheMap.tmx");
         mapManager.addMap("eastworld", "eastworld.tmx");
         mapManager.addMap("otherworld", "otherworld.tmx");
+        mapManager.addMap("town", "town.tmx");
 
         final float w = Gdx.graphics.getWidth();
         final float h = Gdx.graphics.getHeight();
 
         currentMap = mapManager.getMap("TheMap");
 
-        tiledMapRenderer = new OrthogonalTiledMapRendererWithSprites(currentMap, stage.getBatch());
+        tiledMapRenderer = new OrthogonalTiledMapRendererWithSprites(currentMap, batch);
 
         player = new Player();
 
@@ -69,6 +79,8 @@ public class WorldScreen implements Screen {
 
         gameTextActor = new GameTextActor();
         //stage.addActor(gameTextActor);
+        
+        
 
         Gdx.input.setInputProcessor(stage);
     }
@@ -86,7 +98,7 @@ public class WorldScreen implements Screen {
 
             handleCollisions();
 
-            updateCharacter(delta);
+            updateMap(delta);
             
             handleTransition(delta);
         }
@@ -102,15 +114,10 @@ public class WorldScreen implements Screen {
         stage.act(delta);
         stage.draw();
     }
-
-    private void updateCharacter(final float deltaTime) {
+    
+    private void updateMap(final float deltaTime) {
         currentMap.updatePlayer(player, deltaTime);
-//        final TextureMapObject character = currentMap.getPlayerMapObject();
-//
-//        final PositionInformation playerPos = player.getPositionInformation();
-//        character.setTextureRegion(player.getTextureRegion(deltaTime));
-//        character.setX(playerPos.getX());
-//        character.setY(playerPos.getY());
+        currentMap.updateItems();
     }
 
     private void handleTransition(final float deltaTime) {
@@ -122,7 +129,17 @@ public class WorldScreen implements Screen {
         final Transition nextMap = currentMap.getTransition(charX, charY, width, collisionHeight);
         if (nextMap != null) {
             inTransition = true;
-            stage.addAction(Actions.alpha(0.0f, 0.5f));
+            
+            final Pixmap pm = new Pixmap(800, 800, Pixmap.Format.RGBA8888);
+            pm.setColor(Color.BLACK);
+            pm.fillRectangle(0, 0, pm.getWidth(), pm.getHeight());
+            final Texture t = new Texture(pm);
+            pm.dispose();
+            final Image img = new Image(t);
+            img.setColor(0, 0, 0, 0);
+            img.setSize(stage.getWidth(), stage.getHeight());
+            stage.addActor(img);
+            img.addAction(Actions.alpha(1f, 0.5f));
             final Actor actor = new Actor();
             actor.addAction(
                     Actions.sequence(
@@ -136,13 +153,15 @@ public class WorldScreen implements Screen {
                                     currentMap.initializePlayer(prevMap, nextMap.getIndex(), deltaTime, player);
                                     tiledMapRenderer.setMap(currentMap);
                                     hudActor.setCurrentMap(currentMap);
+                                    img.addAction(Actions.alpha(0f, 0.5f));
                                 }
                             }),
+                            Actions.delay(0.5f),
                             Actions.run(new Runnable() {
                                 @Override
                                 public void run() {
                                     stage.getActors().removeValue(actor, true);
-                                    stage.addAction(Actions.alpha(1.0f, 0.5f));
+                                    stage.getActors().removeValue(img, true);
                                     inTransition = false;
                                 }
 
@@ -199,6 +218,10 @@ public class WorldScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
             player.takeHit(50);
         }
+        
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            performAction();
+        }
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             player.moveWest(deltaTime);
@@ -244,6 +267,28 @@ public class WorldScreen implements Screen {
         tiledMapRenderer.dispose();
         player.dispose();
         stage.dispose();
+    }
+    
+    private void performAction() {
+        // based on the player's position and facing direction,
+        // get any items within x tiles from their current position
+        // in the direction they're facing.
+        final Item item = currentMap.getNearbyItems(player);
+        if (item == null) {
+            return;
+        }
+        
+        if (item.isActionPerformed()) {
+            return;
+        }
+        
+        if (!item.isAlive()) {
+            return;
+        }
+        
+        final String contains = item.getContains();
+        System.err.println("You just got " + contains);
+        item.setActionPerformed(true);
     }
 
 }
