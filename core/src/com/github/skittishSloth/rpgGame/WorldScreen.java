@@ -8,18 +8,11 @@ package com.github.skittishSloth.rpgGame;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.github.skittishSloth.rpgGame.engine.gameText.GameTextActor;
 import com.github.skittishSloth.rpgGame.engine.maps.ManagedMap;
 import com.github.skittishSloth.rpgGame.engine.maps.OrthogonalTiledMapRendererWithSprites;
 import com.github.skittishSloth.rpgGame.engine.maps.TiledMapManager;
@@ -28,6 +21,7 @@ import com.github.skittishSloth.rpgGame.engine.hud.HUDActor;
 import com.github.skittishSloth.rpgGame.engine.maps.Item;
 import com.github.skittishSloth.rpgGame.engine.player.Player;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
+import com.github.skittishSloth.rpgGame.engine.transitionEffects.FadeInOutEffect;
 
 /**
  *
@@ -46,7 +40,6 @@ public class WorldScreen implements Screen {
     private final Stage stage;
 
     private final HUDActor hudActor;
-    private final GameTextActor gameTextActor;
     private final SpriteBatch batch;
 
     public WorldScreen() {
@@ -77,11 +70,6 @@ public class WorldScreen implements Screen {
         camera.setToOrtho(false, w, h);
         camera.update();
 
-        gameTextActor = new GameTextActor();
-        //stage.addActor(gameTextActor);
-        
-        
-
         Gdx.input.setInputProcessor(stage);
     }
 
@@ -99,7 +87,7 @@ public class WorldScreen implements Screen {
             handleCollisions();
 
             updateMap(delta);
-            
+
             handleTransition(delta);
         }
 
@@ -108,13 +96,10 @@ public class WorldScreen implements Screen {
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
 
-        gameTextActor.update(camera);
-        //miniMap.render(stage.getBatch());
-
         stage.act(delta);
         stage.draw();
     }
-    
+
     private void updateMap(final float deltaTime) {
         currentMap.updatePlayer(player, deltaTime);
         currentMap.updateItems();
@@ -129,44 +114,28 @@ public class WorldScreen implements Screen {
         final Transition nextMap = currentMap.getTransition(charX, charY, width, collisionHeight);
         if (nextMap != null) {
             inTransition = true;
-            
-            final Pixmap pm = new Pixmap(800, 800, Pixmap.Format.RGBA8888);
-            pm.setColor(Color.BLACK);
-            pm.fillRectangle(0, 0, pm.getWidth(), pm.getHeight());
-            final Texture t = new Texture(pm);
-            pm.dispose();
-            final Image img = new Image(t);
-            img.setColor(0, 0, 0, 0);
-            img.setSize(stage.getWidth(), stage.getHeight());
-            stage.addActor(img);
-            img.addAction(Actions.alpha(1f, 0.5f));
-            final Actor actor = new Actor();
-            actor.addAction(
-                    Actions.sequence(
-                            Actions.delay(0.5f),
-                            Actions.run(new Runnable() {
-                                @Override
-                                public void run() {
-                                    final String prevMap = currentMap.getName();
-                                    currentMap.removePlayer();
-                                    currentMap = mapManager.getMap(nextMap.getMapName());
-                                    currentMap.initializePlayer(prevMap, nextMap.getIndex(), deltaTime, player);
-                                    tiledMapRenderer.setMap(currentMap);
-                                    hudActor.setCurrentMap(currentMap);
-                                    img.addAction(Actions.alpha(0f, 0.5f));
-                                }
-                            }),
-                            Actions.delay(0.5f),
-                            Actions.run(new Runnable() {
-                                @Override
-                                public void run() {
-                                    stage.getActors().removeValue(actor, true);
-                                    stage.getActors().removeValue(img, true);
-                                    inTransition = false;
-                                }
 
-                            })));
-            stage.addActor(actor);
+            final FadeInOutEffect fade = new FadeInOutEffect(stage);
+            final Runnable afterFadeOut = new Runnable() {
+                @Override
+                public void run() {
+                    final String prevMap = currentMap.getName();
+                    currentMap.removePlayer();
+                    currentMap = mapManager.getMap(nextMap.getMapName());
+                    currentMap.initializePlayer(prevMap, nextMap.getIndex(), deltaTime, player);
+                    tiledMapRenderer.setMap(currentMap);
+                    hudActor.setCurrentMap(currentMap);
+                }
+            };
+
+            final Runnable afterFadeIn = new Runnable() {
+                @Override
+                public void run() {
+                    inTransition = false;
+                }
+            };
+
+            fade.runEffect(afterFadeOut, afterFadeIn);
         }
     }
 
@@ -216,17 +185,15 @@ public class WorldScreen implements Screen {
 
     private void handleMovement(final float deltaTime) {
         if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
-            System.err.println("Taking hit.");
             player.takeHit(50);
         }
-        
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
             performAction();
         }
-        
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.A)) {
             player.attack();
-            System.err.println("Attacking.");
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
@@ -238,6 +205,10 @@ public class WorldScreen implements Screen {
         } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             player.moveSouth(deltaTime);
         } else {
+            player.setMoving(false);
+        }
+
+        if (player.isAllAnimationFinished()) {
             player.setMoving(false);
         }
     }
@@ -273,8 +244,9 @@ public class WorldScreen implements Screen {
         tiledMapRenderer.dispose();
         player.dispose();
         stage.dispose();
+        batch.dispose();
     }
-    
+
     private void performAction() {
         // based on the player's position and facing direction,
         // get any items within x tiles from their current position
@@ -283,15 +255,15 @@ public class WorldScreen implements Screen {
         if (item == null) {
             return;
         }
-        
+
         if (item.isActionPerformed()) {
             return;
         }
-        
+
         if (!item.isAlive()) {
             return;
         }
-        
+
         final String contains = item.getContains();
         System.err.println("You just got " + contains);
         item.setActionPerformed(true);

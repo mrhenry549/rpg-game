@@ -5,7 +5,9 @@
  */
 package com.github.skittishSloth.rpgGame.engine.sprites;
 
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Disposable;
@@ -22,21 +24,41 @@ public class UniversalDirectionalSprite implements Disposable {
     public static final int SPRITE_WIDTH = 64;
     public static final int SPRITE_HEIGHT = 64;
 
-    public UniversalDirectionalSprite(final String imgName, final float frameRate, final AnimationState... availableAnimations) {
+    public static UniversalDirectionalSprite createdMergedSprite(final float frameRate, final AnimationState[] availableAnimations, final Texture[] textures) {
+        // get the first texture as a baseline.
+        final Texture baselineTexture = textures[0];
+        final int width = baselineTexture.getWidth();
+        final int height = baselineTexture.getHeight();
+
+        final Pixmap mergedPm = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+        for (final Texture texture : textures) {
+            final TextureData textureData = texture.getTextureData();
+            if (!textureData.isPrepared()) {
+                textureData.prepare();
+            }
+            final Pixmap pm = textureData.consumePixmap();
+            mergedPm.drawPixmap(pm, 0, 0);
+            if (!textureData.disposePixmap()) {
+                pm.dispose();
+            }
+        }
+        final Texture mergedTexture = new Texture(mergedPm);
+        mergedPm.dispose();
+
+        return new UniversalDirectionalSprite(mergedTexture, frameRate, availableAnimations);
+    }
+
+    public UniversalDirectionalSprite(final Texture baseTexture, final float frameRate, final AnimationState... availableAnimations) {
         this.frameRate = frameRate;
-        baseTexturePath = imgName;
-        baseTexture = new Texture(imgName);
+        this.baseTexture = baseTexture;
 
         this.availableAnimations = availableAnimations;
 
-        System.err.println("*** Animations for " + imgName + " ***");
         for (final AnimationState mState : this.availableAnimations) {
             final Map<Direction, Animation> directionAnimations = new EnumMap<Direction, Animation>(Direction.class);
             for (final Direction dir : Direction.values()) {
                 if (mState == AnimationState.IDLE) {
                     final TextureRegion idle = getIdleRegion(dir, baseTexture);
-                    System.err.println("Got idle region for direction " + dir);
-                    System.err.println("W: " + idle.getRegionWidth() + ", H: " + idle.getRegionHeight());
                     final Animation idleAnimation = new Animation(this.frameRate, idle);
                     directionAnimations.put(dir, idleAnimation);
                 } else if (mState != AnimationState.HURT) {
@@ -53,6 +75,10 @@ public class UniversalDirectionalSprite implements Disposable {
         }
     }
 
+    public UniversalDirectionalSprite(final String imgName, final float frameRate, final AnimationState... availableAnimations) {
+        this(new Texture(imgName), frameRate, availableAnimations);
+    }
+
     public TextureRegion getTextureRegion(final float deltaTime) {
         final Map<Direction, Animation> stateAnimations = animations.get(animationState);
         final Animation animation = stateAnimations.get(currentDirection);
@@ -61,7 +87,7 @@ public class UniversalDirectionalSprite implements Disposable {
         }
 
         final TextureRegion res = animation.getKeyFrame(movementTime, animationState.isLoopable());
-        
+
         this.width = res.getRegionWidth();
         this.height = res.getRegionHeight();
         return res;
@@ -127,32 +153,40 @@ public class UniversalDirectionalSprite implements Disposable {
     public int getHeight() {
         return height;
     }
-    
+
+    public boolean isMoveable() {
+        return animationState.isMoveable();
+    }
+
+    public boolean isAnimationFinished() {
+        final Map<Direction, Animation> stateAnimations = animations.get(animationState);
+        final Animation animation = stateAnimations.get(currentDirection);
+        return (animation.isAnimationFinished(movementTime));
+    }
+
+    public Texture getBaseTexture() {
+        return baseTexture;
+    }
+
     private static TextureRegion[] getHurtFrames(final Texture texture) {
         return getFrames(Direction.UP, AnimationState.HURT, texture);
     }
-    
+
     private static TextureRegion[] getFrames(final Direction direction, final AnimationState animationState, final Texture texture) {
-        System.err.println("Building frames for " + direction + ", " + animationState);
         final int section = animationState.getSectionIndex();
         final int rowInSection = direction.getRowInSection();
         final int numFrames = animationState.getNumFrames();
-        
-        System.err.println("S: " + section + ", R: " + rowInSection + ", N: " + numFrames);
+
         final TextureRegion[] frames = new TextureRegion[numFrames];
-        
+
         final int sectionOffset = section * 4 * SPRITE_HEIGHT;
-        System.err.println("SO: " + sectionOffset);
-        
+
         final int rowOffset = rowInSection * SPRITE_HEIGHT;
-        System.err.println("RO: " + rowOffset);
-        
+
         final int y = sectionOffset + rowOffset;
-        System.err.println("YO: " + y);
-        
+
         for (int i = 0; i < numFrames; ++i) {
             final int x = i * SPRITE_WIDTH;
-            System.err.println("F[" + i + "]: x, y:" + x + ", " + y + ", w: " + SPRITE_WIDTH + ", h: " + SPRITE_HEIGHT);
             frames[i] = new TextureRegion(texture, x, y, SPRITE_WIDTH, SPRITE_HEIGHT);
         }
 
@@ -169,7 +203,6 @@ public class UniversalDirectionalSprite implements Disposable {
 
     private final AnimationState[] availableAnimations;
     private final Texture baseTexture;
-    private final String baseTexturePath;
 
     private boolean moving = false;
     private float movementTime = 0f;

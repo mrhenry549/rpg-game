@@ -55,7 +55,6 @@ public class GameTextActor extends Actor {
     @Override
     public void draw(Batch batch, float parentAlpha) {
         table.draw(batch, parentAlpha);
-        table.debug();
     }
 
     private final Table table;

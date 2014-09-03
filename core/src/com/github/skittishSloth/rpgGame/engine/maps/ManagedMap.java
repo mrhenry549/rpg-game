@@ -23,6 +23,7 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Pool;
 import com.github.skittishSloth.rpgGame.engine.common.Direction;
 import com.github.skittishSloth.rpgGame.engine.player.Player;
 import com.github.skittishSloth.rpgGame.engine.player.PositionInformation;
@@ -51,6 +52,8 @@ public class ManagedMap {
         // calc total map size
         this.worldWidth = mapWidth * tilePixelWidth;
         this.worldHeight = mapHeight * tilePixelHeight;
+
+        this.characterRectangle = new Rectangle();
         
         initializeItems();
     }
@@ -102,7 +105,7 @@ public class ManagedMap {
     public MapLayer getPlayerLayer() {
         return map.getLayers().get("player");
     }
-    
+
     public MapLayers getAllLayers() {
         return map.getLayers();
     }
@@ -113,7 +116,7 @@ public class ManagedMap {
 
         for (final MapObject event : events) {
             final String type = event.getProperties().get("type", String.class);
-            if (!("map_entry".equals(type))) {
+            if (!(StringUtils.equals(type, "map_entry"))) {
                 continue;
             }
 
@@ -125,8 +128,8 @@ public class ManagedMap {
             if (src == null) {
                 continue;
             }
-            
-            if (!src.equals(source)) {
+
+            if (!StringUtils.equals(src, source)) {
                 continue;
             }
 
@@ -137,7 +140,7 @@ public class ManagedMap {
             } else {
                 eventIdx = Integer.valueOf(tempEventIdx);
             }
-            
+
             if (index == null) {
                 System.err.println("Index was null.");
                 if (eventIdx == null) {
@@ -170,73 +173,73 @@ public class ManagedMap {
 
     public void initializePlayer(final String source, final Integer index, final float deltaTime, final Player player) {
         final MapObject entryPoint = getEntryPoint(source, index);
-        final TextureRegion[] textureRegions = player.getTextureRegions(deltaTime);
+        final TextureRegion textureRegion = player.getTextureRegion(deltaTime);
         final RectangleMapObject rectStartPoint;
         if (entryPoint == null) {
-            System.err.println("[Map " + getName() + "]: entry point was null.");
             rectStartPoint = new RectangleMapObject(0, 0, player.getWidth(), player.getHeight());
         } else {
-            System.err.println("[Map " + getName() + "]: had an entry point!");
             rectStartPoint = RectangleMapObject.class.cast(entryPoint);
         }
 
         final float x = rectStartPoint.getRectangle().getX();
         final float y = rectStartPoint.getRectangle().getY();
 
-        for (final TextureRegion textureRegion : textureRegions) {
-            final TextureMapObject tmo = new TextureMapObject(textureRegion);
-            tmo.setX(x);
-            tmo.setY(y);
-            getPlayerLayer().getObjects().add(tmo);
-        }
+        final TextureMapObject tmo = new TextureMapObject(textureRegion);
+        tmo.setX(x);
+        tmo.setY(y);
+        getPlayerLayer().getObjects().add(tmo);
+
         final PositionInformation playerPos = player.getPositionInformation();
         playerPos.setX(x);
         playerPos.setY(y);
     }
-    
+
     public void updatePlayer(final Player player, final float deltaTime) {
+        if (!player.needsUpdate()) {
+            return;
+        }
+
         final MapObjects mapObjects = getPlayerLayer().getObjects();
         while (mapObjects.getCount() > 0) {
             mapObjects.remove(0);
         }
-        
-        final TextureRegion[] textureRegions = player.getTextureRegions(deltaTime);
+
+        final TextureRegion textureRegion = player.getTextureRegion(deltaTime);
 
         final PositionInformation playerPos = player.getPositionInformation();
         final float x = playerPos.getX();
         final float y = playerPos.getY();
-        for (final TextureRegion textureRegion : textureRegions) {
-            final TextureMapObject tmo = new TextureMapObject(textureRegion);
-            tmo.setX(x);
-            tmo.setY(y);
-            mapObjects.add(tmo);
-        }
+
+        final TextureMapObject tmo = new TextureMapObject(textureRegion);
+        tmo.setX(x);
+        tmo.setY(y);
+        mapObjects.add(tmo);
     }
-    
+
     public void updateItems() {
         final MapLayer objectsLayer = getObjectsLayer();
         final MapObjects objects = objectsLayer.getObjects();
-        
+
         for (final TextureMapObject textureObj : objects.getByType(TextureMapObject.class)) {
             final String type = textureObj.getProperties().get("type", String.class);
             if (StringUtils.equals(type, "item")) {
                 objects.remove(textureObj);
             }
         }
-        
+
         for (final RectangleMapObject obj : objects.getByType(RectangleMapObject.class)) {
             final MapProperties props = obj.getProperties();
             final String type = props.get("type", String.class);
             if (!(StringUtils.equals(type, "item"))) {
                 continue;
             }
-            
+
             final String id = props.get("id", String.class);
             final Item item = items.get(id);
             if (!(item.isAlive())) {
                 continue;
             }
-            
+
             final TextureRegion region = item.getTextureRegion();
             final TextureMapObject tmo = new TextureMapObject(region);
             final Rectangle rect = item.getRectangle();
@@ -254,52 +257,56 @@ public class ManagedMap {
         // just checks collisions layer
         final MapLayer collisionsLayer = getCollisionsLayer();
         final MapObjects collisions = collisionsLayer.getObjects();
-        final Rectangle charRect = new Rectangle(x, y, w, h);
+        
+        characterRectangle.x = x;
+        characterRectangle.y = y;
+        characterRectangle.width = w;
+        characterRectangle.height = h;
+        
         // there are several other types, Rectangle is probably the most common one
         for (final RectangleMapObject rectangleObject : collisions.getByType(RectangleMapObject.class)) {
             final Rectangle rectangle = rectangleObject.getRectangle();
-            if (Intersector.overlaps(rectangle, charRect)) {
+            if (Intersector.overlaps(rectangle, characterRectangle)) {
                 return true;
             }
         }
-        
+
         for (final Item item : items.values()) {
             if (!(item.isAlive())) {
                 continue;
             }
-            
+
             final Rectangle rectangle = item.getRectangle();
-            if (Intersector.overlaps(rectangle, charRect)) {
+            if (Intersector.overlaps(rectangle, characterRectangle)) {
                 return true;
             }
         }
-        
+
         for (final CircleMapObject circleObj : collisions.getByType(CircleMapObject.class)) {
-            System.err.println("Got a circle!");
             final Circle circle = circleObj.getCircle();
-            if (Intersector.overlaps(circle, charRect)) {
+            if (Intersector.overlaps(circle, characterRectangle)) {
                 return true;
             }
         }
-        
+
         final float rightX = x + w;
         final float bottomY = y + h;
         for (final PolygonMapObject polyObject : collisions.getByType(PolygonMapObject.class)) {
             final Polygon poly = polyObject.getPolygon();
-            if (Intersector.overlaps(poly.getBoundingRectangle(), charRect)) {
+            if (Intersector.overlaps(poly.getBoundingRectangle(), characterRectangle)) {
                 // use poly.contains(x, y) based on each rectangle vertex.
                 if (poly.contains(x, y)) {
                     return true;
                 }
-                
+
                 if (poly.contains(rightX, y)) {
                     return true;
                 }
-                
+
                 if (poly.contains(x, bottomY)) {
                     return true;
                 }
-                
+
                 if (poly.contains(rightX, bottomY)) {
                     return true;
                 }
@@ -317,7 +324,7 @@ public class ManagedMap {
         for (RectangleMapObject rectangleObject : events.getByType(RectangleMapObject.class)) {
             final MapProperties props = rectangleObject.getProperties();
             final String objType = props.get("type", String.class);
-            if (!("transition".equals(objType))) {
+            if (!(StringUtils.equals(objType, "transition"))) {
                 continue;
             }
 
@@ -359,6 +366,9 @@ public class ManagedMap {
 
     public void dispose() {
         map.dispose();
+        for (final Item item : items.values()) {
+            item.dispose();
+        }
     }
 
     public Item getNearbyItems(final Player player) {
@@ -370,7 +380,7 @@ public class ManagedMap {
         searchRect.y = playerPos.getY();
         searchRect.width = player.getWidth();
         searchRect.height = player.getHeight();
-        
+
         switch (facing) {
             case UP:
                 searchRect.y += tilePixelHeight;
@@ -385,45 +395,45 @@ public class ManagedMap {
                 searchRect.x -= tilePixelWidth;
                 break;
         }
-        
+
         final MapLayer objectLayer = getObjectsLayer();
         final MapObjects objects = objectLayer.getObjects();
         Item res = null;
-        
+
         for (final RectangleMapObject obj : objects.getByType(RectangleMapObject.class)) {
             final MapProperties props = obj.getProperties();
             final String type = props.get("type", String.class);
             if (!(StringUtils.equals(type, "item"))) {
                 continue;
             }
-            
+
             final String id = props.get("id", String.class);
             final Item item = items.get(id);
-            
+
             if (Intersector.overlaps(searchRect, item.getRectangle())) {
                 res = item;
                 break;
             }
         }
-        
+
         return res;
     }
-    
+
     private void initializeItems() {
         final MapLayer objectsLayer = getObjectsLayer();
         final MapObjects objects = objectsLayer.getObjects();
-        
+
         for (final RectangleMapObject obj : objects.getByType(RectangleMapObject.class)) {
             final MapProperties props = obj.getProperties();
-            
+
             final String type = props.get("type", String.class);
-            if (!("item".equals(type))) {
+            if (!(StringUtils.equals(type, "item"))) {
                 continue;
             }
-            
+
             final String initialTexturePath = props.get("initial_icon", String.class);
             final Texture initialTexture = new Texture(Gdx.files.internal(initialTexturePath));
-            
+
             final String actionTexturePath = props.get("action_icon", String.class);
             final Texture actionTexture;
             if (StringUtils.isBlank(actionTexturePath)) {
@@ -431,7 +441,7 @@ public class ManagedMap {
             } else {
                 actionTexture = new Texture(Gdx.files.internal(actionTexturePath));
             }
-            
+
             final String contains = props.get("contains", String.class);
             final Rectangle rectangle = obj.getRectangle();
             final String id = props.get("id", String.class);
@@ -451,4 +461,5 @@ public class ManagedMap {
     private final int worldWidth;
     private final int worldHeight;
 
+    private final Rectangle characterRectangle;
 }

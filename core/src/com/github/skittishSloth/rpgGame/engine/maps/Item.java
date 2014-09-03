@@ -9,12 +9,13 @@ package com.github.skittishSloth.rpgGame.engine.maps;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Disposable;
 
 /**
  *
  * @author mcory01
  */
-public class Item {
+public class Item implements Disposable {
 
     public Item(final String id, final Texture initialTexture, final Texture actionTexture, final String contains, final Rectangle rectangle) {
         this.id = id;
@@ -66,6 +67,17 @@ public class Item {
 
     public void setAlive(final boolean alive) {
         this.alive = alive;
+    }
+    
+    @Override
+    public void dispose() {
+        if (initialTexture != null) {
+            initialTexture.dispose();
+        }
+        
+        if (actionTexture != null) {
+            actionTexture.dispose();
+        }
     }
     
     private final String id;
