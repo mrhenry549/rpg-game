@@ -13,8 +13,8 @@ package com.github.skittishSloth.rpgGame.engine.sprites;
 public enum AnimationState {
     IDLE("idle", true, 1, -1),
     WALKING("walk", true, 9, 2),
-    SLASHING("slash", false, 6, 4),
-    SHOOTING("shoot", false, 13, 5),
+    SLASHING("slash", false, 6, 3),
+    SHOOTING("shoot", false, 13, 4),
     HURT("hurt", false, 6, 5),
     THRUSTING("thrust", false, 8, 1),
     CASTING("cast", false, 7, 0);

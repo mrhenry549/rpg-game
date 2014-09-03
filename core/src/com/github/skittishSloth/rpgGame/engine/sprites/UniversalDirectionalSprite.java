@@ -24,10 +24,12 @@ public class UniversalDirectionalSprite implements Disposable {
 
     public UniversalDirectionalSprite(final String imgName, final float frameRate, final AnimationState... availableAnimations) {
         this.frameRate = frameRate;
+        baseTexturePath = imgName;
         baseTexture = new Texture(imgName);
 
         this.availableAnimations = availableAnimations;
 
+        System.err.println("*** Animations for " + imgName + " ***");
         for (final AnimationState mState : this.availableAnimations) {
             final Map<Direction, Animation> directionAnimations = new EnumMap<Direction, Animation>(Direction.class);
             for (final Direction dir : Direction.values()) {
@@ -37,8 +39,12 @@ public class UniversalDirectionalSprite implements Disposable {
                     System.err.println("W: " + idle.getRegionWidth() + ", H: " + idle.getRegionHeight());
                     final Animation idleAnimation = new Animation(this.frameRate, idle);
                     directionAnimations.put(dir, idleAnimation);
-                } else {
+                } else if (mState != AnimationState.HURT) {
                     final TextureRegion[] frames = getFrames(dir, mState, baseTexture);
+                    final Animation anim = new Animation(this.frameRate, frames);
+                    directionAnimations.put(dir, anim);
+                } else {
+                    final TextureRegion[] frames = getHurtFrames(baseTexture);
                     final Animation anim = new Animation(this.frameRate, frames);
                     directionAnimations.put(dir, anim);
                 }
@@ -88,11 +94,25 @@ public class UniversalDirectionalSprite implements Disposable {
 
     public void setMoving(final boolean moving) {
         if (!moving) {
-            movementTime = 0;
-            for (final AnimationState available : availableAnimations) {
-                if (available == AnimationState.IDLE) {
-                    setAnimationState(AnimationState.IDLE);
-                    break;
+            if (animationState == AnimationState.WALKING) {
+                movementTime = 0;
+                for (final AnimationState available : availableAnimations) {
+                    if (available == AnimationState.IDLE) {
+                        setAnimationState(AnimationState.IDLE);
+                        break;
+                    }
+                }
+            } else if (animationState != AnimationState.HURT) {
+                final Map<Direction, Animation> stateAnimations = animations.get(animationState);
+                final Animation animation = stateAnimations.get(currentDirection);
+                if (animation.isAnimationFinished(movementTime)) {
+                    movementTime = 0;
+                    for (final AnimationState available : availableAnimations) {
+                        if (available == AnimationState.IDLE) {
+                            setAnimationState(AnimationState.IDLE);
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -106,6 +126,10 @@ public class UniversalDirectionalSprite implements Disposable {
 
     public int getHeight() {
         return height;
+    }
+    
+    private static TextureRegion[] getHurtFrames(final Texture texture) {
+        return getFrames(Direction.UP, AnimationState.HURT, texture);
     }
     
     private static TextureRegion[] getFrames(final Direction direction, final AnimationState animationState, final Texture texture) {
@@ -145,6 +169,7 @@ public class UniversalDirectionalSprite implements Disposable {
 
     private final AnimationState[] availableAnimations;
     private final Texture baseTexture;
+    private final String baseTexturePath;
 
     private boolean moving = false;
     private float movementTime = 0f;

@@ -216,11 +216,17 @@ public class WorldScreen implements Screen {
 
     private void handleMovement(final float deltaTime) {
         if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
+            System.err.println("Taking hit.");
             player.takeHit(50);
         }
         
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
             performAction();
+        }
+        
+        if (Gdx.input.isKeyJustPressed(Input.Keys.A)) {
+            player.attack();
+            System.err.println("Attacking.");
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {

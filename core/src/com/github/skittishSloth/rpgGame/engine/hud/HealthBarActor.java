@@ -49,13 +49,14 @@ public class HealthBarActor extends Actor {
     }
 
     public void update(final Camera camera) {
+        updateHealthBar(camera);
+        updateHealthBarBox(camera);
+        
         if (coordsSet) {
             return;
         }
         
         coordsSet = true;
-        updateHealthBar(camera);
-        updateHealthBarBox(camera);
     }
 
     private void updateHealthBar(final Camera camera) {
@@ -63,7 +64,8 @@ public class HealthBarActor extends Actor {
         final Vector3 worldCoords = camera.unproject(screenCoords);
         healthBar.setX(worldCoords.x);
         healthBar.setY(worldCoords.y);
-        healthBar.setScaleX(player.getHealthPercentage());
+        final float healthPercent = player.getHealthPercentage();
+        healthBar.setScaleX(healthPercent);
     }
 
     private void updateHealthBarBox(final Camera camera) {

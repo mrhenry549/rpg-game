@@ -24,6 +24,7 @@ public class Player implements Disposable {
         this.hatSprite = new UniversalDirectionalSprite("gfx/sprites/head/caps/male/leather_cap_male.png", FRAME_RATE, AnimationState.values());
         this.pantsSprite = new UniversalDirectionalSprite("gfx/sprites/legs/pants/male/teal_pants_male.png", FRAME_RATE, AnimationState.values());
         this.torsoSprite = new UniversalDirectionalSprite("gfx/sprites/torso/chain/mail_male.png", FRAME_RATE, AnimationState.values());
+        this.knifeSprite = new UniversalDirectionalSprite("gfx/sprites/weapons/right hand/male/dagger_male.png", FRAME_RATE, AnimationState.values());
     }
 
     public PositionInformation getPositionInformation() {
@@ -97,17 +98,23 @@ public class Player implements Disposable {
             setAnimationState(AnimationState.HURT);
         }
     }
+    
+    public void attack() {
+        setAnimationState(AnimationState.SHOOTING);
+    }
 
     public TextureRegion[] getTextureRegions(final float deltaTime) {
         final TextureRegion bodyRegion = bodySprite.getTextureRegion(deltaTime);
         final TextureRegion capRegion = hatSprite.getTextureRegion(deltaTime);
         final TextureRegion pantsRegion = pantsSprite.getTextureRegion(deltaTime);
         final TextureRegion torsoRegion = torsoSprite.getTextureRegion(deltaTime);
+        final TextureRegion knifeRegion = knifeSprite.getTextureRegion(deltaTime);
         return new TextureRegion[] {
             bodyRegion,
             capRegion,
             pantsRegion,
-            torsoRegion
+            torsoRegion,
+            knifeRegion
         };
     }
 
@@ -125,6 +132,7 @@ public class Player implements Disposable {
         hatSprite.dispose();
         pantsSprite.dispose();
         torsoSprite.dispose();
+        knifeSprite.dispose();
     }
 
     public float getHealthPercentage() {
@@ -136,6 +144,7 @@ public class Player implements Disposable {
         hatSprite.setCurrentDirection(direction);
         pantsSprite.setCurrentDirection(direction);
         torsoSprite.setCurrentDirection(direction);
+        knifeSprite.setCurrentDirection(direction);
     }
 
     public void setMoving(boolean moving) {
@@ -143,20 +152,26 @@ public class Player implements Disposable {
         hatSprite.setMoving(moving);
         pantsSprite.setMoving(moving);
         torsoSprite.setMoving(moving);
+        knifeSprite.setMoving(moving);
     }
 
     public void setAnimationState(AnimationState animationState) {
-        bodySprite.setAnimationState(animationState);
-        hatSprite.setAnimationState(animationState);
-        pantsSprite.setAnimationState(animationState);
-        torsoSprite.setAnimationState(animationState);
+        System.err.println("Setting animation state to " + animationState);
+        currentAnimation = animationState;
+        bodySprite.setAnimationState(currentAnimation);
+        hatSprite.setAnimationState(currentAnimation);
+        pantsSprite.setAnimationState(currentAnimation);
+        torsoSprite.setAnimationState(currentAnimation);
+        knifeSprite.setAnimationState(currentAnimation);
     }
 
     private int maxHealth = 500;
 
     private int currentHealth = maxHealth;
     
-    private final UniversalDirectionalSprite bodySprite, hatSprite, pantsSprite, torsoSprite;
+    private final UniversalDirectionalSprite bodySprite, hatSprite, pantsSprite, torsoSprite, knifeSprite;
+    
+    private AnimationState currentAnimation = AnimationState.IDLE;
     
     private final PositionInformation position = new PositionInformation();
     private final PositionInformation previousPosition = new PositionInformation();
