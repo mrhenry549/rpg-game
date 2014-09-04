@@ -5,10 +5,20 @@
  */
 package com.github.skittishSloth.rpgGame.engine.player;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.skittishSloth.rpgGame.engine.common.Direction;
+import com.github.skittishSloth.rpgGame.engine.equipment.PlayerEquipment;
 import com.github.skittishSloth.rpgGame.engine.sprites.AnimationState;
 import com.github.skittishSloth.rpgGame.engine.sprites.UniversalDirectionalSprite;
 
@@ -27,15 +37,64 @@ public class Player implements Disposable {
         final Texture pantsTexture = new Texture("gfx/sprites/legs/pants/male/teal_pants_male.png");
         final Texture torsoTexture = new Texture("gfx/sprites/torso/chain/mail_male.png");
         final Texture weaponTexture = new Texture("gfx/sprites/weapons/right hand/male/dagger_male.png");
+
+        final int height = bodyTexture.getHeight();
+        final int width = bodyTexture.getWidth();
+        
+        final String VERTEX = Gdx.files.internal("passthrough.vert").readString();
+        final String FRAGMENT = Gdx.files.internal("invert.frag").readString();
+        final ShaderProgram program = new ShaderProgram(VERTEX, FRAGMENT);
+        //Good idea to log any warnings if they exist
+        if (program.getLog().length() != 0) {
+            System.out.println("PrgLog: " + program.getLog());
+        }
+        final SpriteBatch sb = new SpriteBatch();
+        sb.setShader(program);
+        
+        //Set the projection matrix for the SpriteBatch.
+        final Matrix4 projectionMatrix = new Matrix4();
+
+        //because Pixmap has its origin on the topleft and everything else in LibGDX has the origin left bottom
+        //we flip the projection matrix on y and move it -height. So it will end up side up in the .png
+        projectionMatrix.setToOrtho2D(0, -height, width, height).scale(1, -1, 1);
+
+        //Set the projection matrix on the SpriteBatch
+        sb.setProjectionMatrix(projectionMatrix);
+        sb.enableBlending();
+        
+        final FrameBuffer fb = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, true);
+        //make the FBO the current buffer
+        fb.begin();
+        
+        //render some sprites 
+        sb.begin();
+        sb.draw(bodyTexture, 0, 0);
+
+        sb.end();
+        
+        final Pixmap bodyTintedPm = ScreenUtils.getFrameBufferPixmap(0, 0, width, height);
+        fb.end();
+        
+        
+        final Texture bodyTinted = new Texture(bodyTintedPm);
+        bodyTintedPm.dispose();
+       
+        fb.dispose();
+        sb.dispose();
         final Texture[] textures = new Texture[]{
-            bodyTexture,
+            bodyTinted,
             headTexture,
             pantsTexture,
             torsoTexture,
-            weaponTexture
+            weaponTexture,
         };
 
         mergedSprite = UniversalDirectionalSprite.createdMergedSprite(FRAME_RATE, AnimationState.values(), textures);
+        
+        for (final Texture texture : textures) {
+            
+            texture.dispose();
+        }
     }
 
     public PositionInformation getPositionInformation() {
@@ -191,4 +250,5 @@ public class Player implements Disposable {
 
     private final PositionInformation position = new PositionInformation();
     private final PositionInformation previousPosition = new PositionInformation();
+    private final PlayerEquipment equipment = new PlayerEquipment();
 }

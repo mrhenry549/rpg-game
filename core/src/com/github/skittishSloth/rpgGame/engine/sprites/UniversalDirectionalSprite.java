@@ -5,13 +5,22 @@
  */
 package com.github.skittishSloth.rpgGame.engine.sprites;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.skittishSloth.rpgGame.engine.common.Direction;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -30,22 +39,143 @@ public class UniversalDirectionalSprite implements Disposable {
         final int width = baselineTexture.getWidth();
         final int height = baselineTexture.getHeight();
 
-        final Pixmap mergedPm = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-        for (final Texture texture : textures) {
-            final TextureData textureData = texture.getTextureData();
-            if (!textureData.isPrepared()) {
-                textureData.prepare();
-            }
-            final Pixmap pm = textureData.consumePixmap();
-            mergedPm.drawPixmap(pm, 0, 0);
-            if (!textureData.disposePixmap()) {
-                pm.dispose();
-            }
-        }
-        final Texture mergedTexture = new Texture(mergedPm);
-        mergedPm.dispose();
+        final FrameBuffer fb = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
 
-        return new UniversalDirectionalSprite(mergedTexture, frameRate, availableAnimations);
+        final int numTextures = textures.length;
+        //read the files into strings
+        final String VERTEX = Gdx.files.internal("passthrough.vert").readString();
+        final String FRAGMENT = Gdx.files.internal("invert.frag").readString();
+
+        final String VERT
+                = "attribute vec4 " + ShaderProgram.POSITION_ATTRIBUTE + ";\n"
+                + "attribute vec4 " + ShaderProgram.COLOR_ATTRIBUTE + ";\n"
+                + "attribute vec2 " + ShaderProgram.TEXCOORD_ATTRIBUTE + "0;\n"
+                + "uniform mat4 u_projTrans;\n"
+                + " \n"
+                + "varying vec4 vColor;\n"
+                + "varying vec2 vTexCoord;\n"
+                + "void main() {\n"
+                + "	vColor = " + ShaderProgram.COLOR_ATTRIBUTE + ";\n"
+                + "	vTexCoord = " + ShaderProgram.TEXCOORD_ATTRIBUTE + "0;\n"
+                + "	gl_Position =  u_projTrans * " + ShaderProgram.POSITION_ATTRIBUTE + ";\n"
+                + "}";
+
+        //This will be dumped to System.out for clarity
+        final String FRAG
+                = //GL ES specific stuff
+                "#ifdef GL_ES\n" //
+                + "#define LOWP lowp\n" //
+                + "precision mediump float;\n" //
+                + "#else\n" //
+                + "#define LOWP \n" //
+                + "#endif\n" + //
+                "//texture 0\n"
+                + "uniform sampler2D u_texture;\n"
+                + "\n"
+                + "//our screen resolution, set from Java whenever the display is resized\n"
+                + "uniform vec2 resolution;\n"
+                + "\n"
+                + "//\"in\" attributes from our vertex shader\n"
+                + "varying LOWP vec4 vColor;\n"
+                + "varying vec2 vTexCoord;\n"
+                + "\n"
+                + "//RADIUS of our vignette, where 0.5 results in a circle fitting the screen\n"
+                + "const float RADIUS = 0.75;\n"
+                + "\n"
+                + "//softness of our vignette, between 0.0 and 1.0\n"
+                + "const float SOFTNESS = 0.45;\n"
+                + "\n"
+                + "//sepia colour, adjust to taste\n"
+                + "const vec3 SEPIA = vec3(1.2, 1.0, 0.8); \n"
+                + "\n"
+                + "void main() {\n"
+                + "	//sample our texture\n"
+                + "	vec4 texColor = texture2D(u_texture, vTexCoord);\n"
+                + "		\n"
+                + "	//1. VIGNETTE\n"
+                + "	\n"
+                + "	//determine center position\n"
+                + "	vec2 position = (gl_FragCoord.xy / resolution.xy) - vec2(0.5);\n"
+                + "	\n"
+                + "	//determine the vector length of the center position\n"
+                + "	float len = length(position);\n"
+                + "	\n"
+                + "	//use smoothstep to create a smooth vignette\n"
+                + "	float vignette = smoothstep(RADIUS, RADIUS-SOFTNESS, len);\n"
+                + "	\n"
+                + "	//apply the vignette with 50% opacity\n"
+                + "	texColor.rgb = mix(texColor.rgb, texColor.rgb * vignette, 0.5);\n"
+                + "		\n"
+                + "	//2. GRAYSCALE\n"
+                + "	\n"
+                + "	//convert to grayscale using NTSC conversion weights\n"
+                + "	float gray = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));\n"
+                + "	\n"
+                + "	//3. SEPIA\n"
+                + "	\n"
+                + "	//create our sepia tone from some constant value\n"
+                + "	vec3 sepiaColor = vec3(gray) * SEPIA;\n"
+                + "		\n"
+                + "	//again we'll use mix so that the sepia effect is at 75%\n"
+                + "	texColor.rgb = mix(texColor.rgb, sepiaColor, 0.75);\n"
+                + "		\n"
+                + "	//final colour, multiplied by vertex colour\n"
+                + "	gl_FragColor = texColor * vColor;\n"
+                + "}";
+
+        //create our shader program -- be sure to pass SpriteBatch's default attributes!
+        final ShaderProgram program = new ShaderProgram(VERTEX, FRAGMENT);
+        //final ShaderProgram program = new ShaderProgram(vertexShader, fragmentShader);
+
+        //Set the projection matrix for the SpriteBatch.
+        final Matrix4 projectionMatrix = new Matrix4();
+
+        //because Pixmap has its origin on the topleft and everything else in LibGDX has the origin left bottom
+        //we flip the projection matrix on y and move it -height. So it will end up side up in the .png
+        projectionMatrix.setToOrtho2D(0, -height, width, height).scale(1, -1, 1);
+
+        //Good idea to log any warnings if they exist
+        if (program.getLog().length() != 0) {
+            System.out.println("PrgLog: " + program.getLog());
+        }
+
+        //create our sprite batch
+        final SpriteBatch sb = new SpriteBatch();
+//        sb.setShader(program);
+
+        //Set the projection matrix on the SpriteBatch
+        sb.setProjectionMatrix(projectionMatrix);
+        fb.begin();
+        sb.begin();
+        for (int i = 0; i < numTextures; ++i) {
+            final Texture texture = textures[i];
+            sb.draw(texture, 0, 0);
+        }
+        sb.end();
+
+        final Pixmap pm = ScreenUtils.getFrameBufferPixmap(0, 0, width, height);
+
+        fb.end();
+
+        final UniversalDirectionalSprite res = new UniversalDirectionalSprite(new Texture(pm), frameRate, availableAnimations);
+        pm.dispose();
+        sb.dispose();
+        fb.dispose();
+        return res;
+    }
+
+    public static String readFile(InputStream in) throws IOException {
+        final StringBuffer sBuffer = new StringBuffer();
+        final BufferedReader br = new BufferedReader(new InputStreamReader(in));
+        final char[] buffer = new char[1024];
+
+        int cnt;
+        while ((cnt = br.read(buffer, 0, buffer.length)) > -1) {
+            sBuffer.append(buffer, 0, cnt);
+        }
+        br.close();
+        in.close();
+        return sBuffer.toString();
     }
 
     public UniversalDirectionalSprite(final Texture baseTexture, final float frameRate, final AnimationState... availableAnimations) {
